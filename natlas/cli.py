@@ -7,8 +7,16 @@ from natlas.orthography import NigerianOrthographyEngine
 from natlas.guardrails import SovereignCulturalGuardrail
 from natlas.harness.eval import SovereignBenchmarkHarness
 import os
+import sys
 
-console = Console()
+# Ensure UTF-8 output on legacy Windows consoles
+if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
+console = Console(force_terminal=True)
 
 @click.group()
 def app():
@@ -96,9 +104,9 @@ def guard(text):
     """Audit prompt against Sovereign Cultural Safety & Ethnic Bias rules."""
     result = SovereignCulturalGuardrail.check_safety(text)
     if result.is_safe:
-        console.print(f"[bold green]✅ CLEARED:[/bold green] {result.explanation}")
+        console.print(f"[bold green][CLEARED][/bold green] {result.explanation}")
     else:
-        console.print(f"[bold red]⚠️ FLAGGED [Risk: {result.risk_level}]:[/bold red] {result.explanation}")
+        console.print(f"[bold red][FLAGGED - Risk: {result.risk_level}][/bold red] {result.explanation}")
         console.print(f"[yellow]Mitigated Action:[/yellow] {result.mitigated_prompt}")
 
 @app.command()

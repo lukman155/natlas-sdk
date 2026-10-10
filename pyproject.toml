@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "natlas"
-version = "0.1.0"
-description = "Official Python SDK for N-ATLAS (Nigeria's multilingual LLM) and NCAIR Whisper ASR models."
+version = "0.2.0"
+description = "Sovereign AI Agent Runtime, Evaluation Harness & Developer Toolkit for N-ATLAS (Nigeria's Multilingual LLM)."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
@@ -19,6 +19,7 @@ dependencies = [
     "click>=8.1.7",
     "typer>=0.9.0",
     "rich>=13.0.0",
+    "python-multipart>=0.0.7",
 ]
 
 [project.optional-dependencies]
