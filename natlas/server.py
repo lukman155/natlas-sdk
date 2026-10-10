@@ -117,25 +117,56 @@ async def set_endpoint(req: EndpointConfigRequest):
     benchmark_harness = SovereignBenchmarkHarness(client)
     return {"status": "updated", "new_endpoint": req.api_url}
 
+class SingleQueryRequest(BaseModel):
+    prompt: str
+    language: str = "ha"
+    max_tokens: Optional[int] = 180
+
+@app.post("/harness/query-single")
+async def query_single(req: SingleQueryRequest):
+    """Execute live query for a single language with threadpool execution."""
+    import asyncio
+    t0 = time.time()
+    try:
+        resp = await asyncio.to_thread(client.chat, req.prompt, language=req.language)
+        text = resp.text
+    except Exception as e:
+        text = f"[Inference error: {str(e)}]"
+        
+    duration_ms = round((time.time() - t0) * 1000, 1)
+    words = len(text.split())
+    tokens = int(words * 1.4)
+    tps = round(tokens / max(duration_ms / 1000, 0.1), 1)
+    return {
+        "language": req.language,
+        "text": text,
+        "latency_ms": duration_ms,
+        "tokens_per_sec": tps,
+        "tokens": tokens
+    }
+
 @app.post("/harness/matrix-query")
 async def matrix_query(req: MatrixRequest):
-    """Execute live query across Hausa, Yoruba, Igbo, and English against the real GPU."""
+    """Execute live query across Hausa, Yoruba, Igbo, and English concurrently."""
+    import asyncio
     t0 = time.time()
     results = {}
     
-    for lang in req.languages:
+    async def fetch_one(lang):
         try:
-            # Query the live model for each language
-            resp = client.chat(req.prompt, language=lang)
-            results[lang] = resp.text
+            resp = await asyncio.to_thread(client.chat, req.prompt, language=lang)
+            return lang, resp.text
         except Exception as e:
-            results[lang] = f"[Inference error for {lang}: {str(e)}]"
+            return lang, f"[Inference error for {lang}: {str(e)}]"
             
+    tasks = [fetch_one(lang) for lang in req.languages]
+    completed = await asyncio.gather(*tasks)
+    for lang, txt in completed:
+        results[lang] = txt
+        
     duration_ms = round((time.time() - t0) * 1000, 1)
-    
-    # Calculate token metrics
     total_words = sum(len(txt.split()) for txt in results.values())
-    est_tokens = int(total_words * 1.5)
+    est_tokens = int(total_words * 1.4)
     tps = round(est_tokens / max(duration_ms / 1000, 0.1), 1)
     
     return {

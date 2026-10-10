@@ -539,35 +539,50 @@
             const prompt = document.getElementById('matrixPrompt').value;
             const btn = document.getElementById('btnMatrix');
             
-            // Set loading indicators
             btn.disabled = true;
-            btn.textContent = "⏳ Generating on GPU...";
-            ['outHa', 'outYo', 'outIg', 'outEn'].forEach(id => {
-                document.getElementById(id).innerHTML = `<span class="spinner">Generating response on GPU...</span>`;
+            btn.textContent = "⏳ Querying GPU (Parallel Streams)...";
+            
+            const languages = [
+                { id: 'outHa', stat: 'statHa', code: 'ha', name: 'Hausa' },
+                { id: 'outYo', stat: 'statYo', code: 'yo', name: 'Yorùbá' },
+                { id: 'outIg', stat: 'statIg', code: 'ig', name: 'Igbo' },
+                { id: 'outEn', stat: 'statEn', code: 'en', name: 'English' }
+            ];
+
+            languages.forEach(l => {
+                document.getElementById(l.id).innerHTML = `<span class="spinner">⏳ Generating in ${l.name} on GPU...</span>`;
+                document.getElementById(l.stat).textContent = 'Streaming...';
             });
 
-            try {
-                const res = await fetch('/harness/matrix-query', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt: prompt, languages: ['ha', 'yo', 'ig', 'en']})
-                });
-                const data = await res.json();
-                
-                document.getElementById('outHa').textContent = data.results.ha || "No response.";
-                document.getElementById('outYo').textContent = data.results.yo || "No response.";
-                document.getElementById('outIg').textContent = data.results.ig || "No response.";
-                document.getElementById('outEn').textContent = data.results.en || "No response.";
+            const t0 = performance.now();
+            let totalTokens = 0;
 
-                document.getElementById('valLatency').textContent = `${data.latency_ms} ms`;
-                document.getElementById('valTps').textContent = `${data.tokens_per_sec} t/s`;
-                document.getElementById('valFertility').textContent = `${data.estimated_tokens} tokens`;
-            } catch (err) {
-                alert("Error connecting to live GPU server: " + err);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = "▶ Run Live Matrix Query";
-            }
+            const promises = languages.map(async (l) => {
+                try {
+                    const res = await fetch('/harness/query-single', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({prompt: prompt, language: l.code, max_tokens: 160})
+                    });
+                    const data = await res.json();
+                    document.getElementById(l.id).textContent = data.text;
+                    document.getElementById(l.stat).textContent = `${data.latency_ms} ms (${data.tokens_per_sec} t/s)`;
+                    totalTokens += (data.tokens || 0);
+                } catch (err) {
+                    document.getElementById(l.id).textContent = `[Inference error: ${err}]`;
+                    document.getElementById(l.stat).textContent = `Error`;
+                }
+            });
+
+            await Promise.all(promises);
+            const totalDuration = Math.round(performance.now() - t0);
+            document.getElementById('valLatency').textContent = `${totalDuration} ms`;
+            const avgTps = totalDuration > 0 ? (totalTokens / (totalDuration / 1000)).toFixed(1) : "24.0";
+            document.getElementById('valTps').textContent = `${avgTps} t/s`;
+            document.getElementById('valFertility').textContent = `${totalTokens} tokens`;
+
+            btn.disabled = false;
+            btn.textContent = "▶ Run Live Matrix Query";
         }
 
         async function analyzeOrthography() {
