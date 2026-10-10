@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import os
+import time
 import tempfile
 import pathlib
 
@@ -13,7 +14,10 @@ from natlas.harness.agent import SovereignAgentHarness
 from natlas.harness.eval import SovereignBenchmarkHarness
 
 app = FastAPI(title="N-ATLAS Sovereign API & Developer Harness", version="0.2.0")
-client = NAtlasClient()
+
+# Default to the live Kaggle GPU server, or env variable if set
+DEFAULT_GPU_URL = os.environ.get("NATLAS_API_URL", "https://d9fd-34-186-47-214.ngrok-free.app")
+client = NAtlasClient(api_url=DEFAULT_GPU_URL)
 agent_harness = SovereignAgentHarness(client)
 benchmark_harness = SovereignBenchmarkHarness(client)
 
@@ -25,7 +29,7 @@ class ChatCompletionRequest(BaseModel):
     model: str = "NCAIR1/N-ATLaS"
     messages: List[ChatMessageInput]
     temperature: Optional[float] = 0.1
-    max_tokens: Optional[int] = 1000
+    max_tokens: Optional[int] = 512
     stream: Optional[bool] = False
 
 class OrthographyRequest(BaseModel):
@@ -37,7 +41,14 @@ class GuardrailRequest(BaseModel):
 
 class AgentRequest(BaseModel):
     query: str
-    language: Optional[str] = "en"
+    language: Optional[str] = "ha"
+
+class MatrixRequest(BaseModel):
+    prompt: str
+    languages: Optional[List[str]] = ["ha", "yo", "ig", "en"]
+
+class EndpointConfigRequest(BaseModel):
+    api_url: str
 
 # Serve the visual developer harness at root and /harness
 @app.get("/", response_class=HTMLResponse)
@@ -60,7 +71,7 @@ async def chat_completions(req: ChatCompletionRequest):
     return {
         "id": "chatcmpl-natlas",
         "object": "chat.completion",
-        "created": 1234567890,
+        "created": int(time.time()),
         "model": req.model,
         "choices": [{
             "index": 0,
@@ -84,7 +95,57 @@ async def transcribe_audio(file: UploadFile = File(...), model: str = "whisper-1
     os.unlink(tmp.name)
     return {"text": result.text, "language": result.language}
 
-# HARNESS DIAGNOSTIC API ENDPOINTS
+# HARNESS DIAGNOSTIC API ENDPOINTS (CONNECTED TO LIVE DATA)
+
+@app.get("/harness/status")
+async def harness_status():
+    backend_info = client.backend_type
+    current_url = getattr(client.chat_pipeline.backend, "base_url", "local")
+    return {
+        "status": "online",
+        "backend": backend_info,
+        "target_model": "NCAIR1/N-ATLaS (8B SFT)",
+        "api_endpoint": current_url,
+        "is_live_gpu": "ngrok" in current_url or "http" in current_url
+    }
+
+@app.post("/harness/set-endpoint")
+async def set_endpoint(req: EndpointConfigRequest):
+    global client, agent_harness, benchmark_harness
+    client = NAtlasClient(api_url=req.api_url)
+    agent_harness = SovereignAgentHarness(client)
+    benchmark_harness = SovereignBenchmarkHarness(client)
+    return {"status": "updated", "new_endpoint": req.api_url}
+
+@app.post("/harness/matrix-query")
+async def matrix_query(req: MatrixRequest):
+    """Execute live query across Hausa, Yoruba, Igbo, and English against the real GPU."""
+    t0 = time.time()
+    results = {}
+    
+    for lang in req.languages:
+        try:
+            # Query the live model for each language
+            resp = client.chat(req.prompt, language=lang)
+            results[lang] = resp.text
+        except Exception as e:
+            results[lang] = f"[Inference error for {lang}: {str(e)}]"
+            
+    duration_ms = round((time.time() - t0) * 1000, 1)
+    
+    # Calculate token metrics
+    total_words = sum(len(txt.split()) for txt in results.values())
+    est_tokens = int(total_words * 1.5)
+    tps = round(est_tokens / max(duration_ms / 1000, 0.1), 1)
+    
+    return {
+        "results": results,
+        "latency_ms": duration_ms,
+        "tokens_per_sec": tps,
+        "estimated_tokens": est_tokens,
+        "gpu_endpoint": getattr(client.chat_pipeline.backend, "base_url", "local")
+    }
+
 @app.post("/harness/analyze-tokens")
 async def analyze_tokens(req: OrthographyRequest):
     report = NigerianOrthographyEngine.analyze_token_fertility(req.text, req.language)
@@ -97,8 +158,30 @@ async def guardrail_check(req: GuardrailRequest):
 
 @app.post("/harness/agent-run")
 async def agent_run(req: AgentRequest):
+    """Execute real multi-step agent reasoning against live GPU and sovereign tools."""
+    t0 = time.time()
     result = agent_harness.run(req.query, req.language)
-    return result
+    duration_ms = round((time.time() - t0) * 1000, 1)
+    
+    steps_data = [
+        {
+            "thought": s.thought,
+            "action": s.action,
+            "action_input": s.action_input,
+            "observation": s.observation
+        }
+        for s in result.steps
+    ]
+    
+    return {
+        "query": result.query,
+        "language": result.language,
+        "steps": steps_data,
+        "final_response": result.final_response,
+        "tools_invoked": result.tools_invoked,
+        "guardrail_passed": result.guardrail_passed,
+        "execution_time_ms": duration_ms
+    }
 
 @app.get("/harness/eval-suite")
 async def run_eval_suite():
@@ -120,4 +203,8 @@ async def list_models():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.2.0-harness"}
+    return {
+        "status": "ok", 
+        "version": "0.2.0-harness",
+        "gpu_endpoint": getattr(client.chat_pipeline.backend, "base_url", "local")
+    }

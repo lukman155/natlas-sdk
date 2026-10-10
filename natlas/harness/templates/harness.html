@@ -31,7 +31,7 @@
         }
 
         header {
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border);
             padding: 14px 24px;
@@ -74,6 +74,7 @@
             border-radius: 50%;
             background: var(--neon-green);
             box-shadow: 0 0 8px var(--neon-green);
+            display: inline-block;
         }
 
         nav.tabs {
@@ -117,7 +118,6 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Grid layouts */
         .grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -152,7 +152,7 @@
 
         textarea {
             width: 100%;
-            height: 120px;
+            height: 110px;
             background: var(--bg-dark);
             border: 1px solid var(--border);
             border-radius: 8px;
@@ -189,6 +189,11 @@
             box-shadow: 0 0 15px var(--neon-green-glow);
         }
 
+        .btn-action:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .telemetry-bar {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -218,7 +223,6 @@
             margin-top: 4px;
         }
 
-        /* Benchmark table */
         table.benchmark-table {
             width: 100%;
             border-collapse: collapse;
@@ -259,7 +263,6 @@
             font-weight: 700;
         }
 
-        /* Code block */
         pre.code-view {
             background: #020617;
             border: 1px solid var(--border);
@@ -269,7 +272,8 @@
             font-size: 12px;
             color: #e2e8f0;
             overflow-x: auto;
-            max-height: 250px;
+            max-height: 350px;
+            white-space: pre-wrap;
         }
 
         .matrix-output-grid {
@@ -283,7 +287,8 @@
             background: #0b1120;
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 12px;
+            padding: 14px;
+            min-height: 130px;
         }
 
         .matrix-title {
@@ -291,6 +296,28 @@
             font-weight: 700;
             color: var(--neon-green);
             margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .matrix-body {
+            font-size: 13px;
+            color: #cbd5e1;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .spinner {
+            color: var(--neon-amber);
+            font-family: 'JetBrains Mono';
+            font-size: 12px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
         }
     </style>
 </head>
@@ -304,8 +331,8 @@
         </div>
         <div class="model-selector">
             <span class="status-dot"></span>
-            <span style="color: var(--text-muted);">Target:</span>
-            <span style="font-family: 'JetBrains Mono'; color: var(--neon-blue); font-weight: 600;">NCAIR1/N-ATLaS (8B SFT)</span>
+            <span style="color: var(--text-muted);">Live GPU:</span>
+            <span id="gpuEndpointLabel" style="font-family: 'JetBrains Mono'; color: var(--neon-green); font-weight: 600;">Connecting...</span>
         </div>
     </header>
 
@@ -322,49 +349,49 @@
         <div id="matrixTab" class="tab-content active">
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">⚡ Parallel Multi-Lingual Prompt Evaluation</span>
-                    <button class="btn-action" onclick="runMatrixEvaluation()">▶ Run Matrix Query</button>
+                    <span class="card-title">⚡ Live Multi-Lingual Matrix (Real GPU Inference)</span>
+                    <button id="btnMatrix" class="btn-action" onclick="runMatrixEvaluation()">▶ Run Live Matrix Query</button>
                 </div>
                 <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-                    Test a single conceptual prompt executed simultaneously across English, Hausa, Yorùbá, and Igbo to verify cross-dialectal parity.
+                    Executes your prompt across <b>Hausa, Yorùbá, Igbo, and English</b> against the real N-ATLAS 8B model to inspect multi-lingual generation and latency.
                 </p>
-                <textarea id="matrixPrompt">How can smallholder farmers manage cassava mosaic disease in Nigeria?</textarea>
+                <textarea id="matrixPrompt">Bawo ni mo se le da oko rogo sile ni Naijiria?</textarea>
 
                 <div class="matrix-output-grid">
                     <div class="matrix-card">
-                        <div class="matrix-title">🟢 Hausa (ha)</div>
-                        <p id="outHa" style="font-size: 13px; color: #cbd5e1;">Click "Run Matrix Query" to inspect output...</p>
+                        <div class="matrix-title"><span>🟢 Hausa (ha)</span><span id="statHa" style="color: var(--text-muted); font-size: 11px;"></span></div>
+                        <div class="matrix-body" id="outHa">Click "Run Live Matrix Query" to query the GPU...</div>
                     </div>
                     <div class="matrix-card">
-                        <div class="matrix-title">🟢 Yorùbá (yo)</div>
-                        <p id="outYo" style="font-size: 13px; color: #cbd5e1;">Click "Run Matrix Query" to inspect output...</p>
+                        <div class="matrix-title"><span>🟢 Yorùbá (yo)</span><span id="statYo" style="color: var(--text-muted); font-size: 11px;"></span></div>
+                        <div class="matrix-body" id="outYo">Click "Run Live Matrix Query" to query the GPU...</div>
                     </div>
                     <div class="matrix-card">
-                        <div class="matrix-title">🟢 Igbo (ig)</div>
-                        <p id="outIg" style="font-size: 13px; color: #cbd5e1;">Click "Run Matrix Query" to inspect output...</p>
+                        <div class="matrix-title"><span>🟢 Igbo (ig)</span><span id="statIg" style="color: var(--text-muted); font-size: 11px;"></span></div>
+                        <div class="matrix-body" id="outIg">Click "Run Live Matrix Query" to query the GPU...</div>
                     </div>
                     <div class="matrix-card">
-                        <div class="matrix-title">🟢 Nigerian English (en)</div>
-                        <p id="outEn" style="font-size: 13px; color: #cbd5e1;">Click "Run Matrix Query" to inspect output...</p>
+                        <div class="matrix-title"><span>🟢 Nigerian English (en)</span><span id="statEn" style="color: var(--text-muted); font-size: 11px;"></span></div>
+                        <div class="matrix-body" id="outEn">Click "Run Live Matrix Query" to query the GPU...</div>
                     </div>
                 </div>
 
                 <div class="telemetry-bar">
                     <div class="telemetry-pill">
-                        <div class="telemetry-label">Avg Latency</div>
-                        <div class="telemetry-value" id="valLatency">142 ms</div>
+                        <div class="telemetry-label">Live GPU Latency</div>
+                        <div class="telemetry-value" id="valLatency">-- ms</div>
                     </div>
                     <div class="telemetry-pill">
                         <div class="telemetry-label">Tokens / Sec</div>
-                        <div class="telemetry-value" id="valTps">24.8 t/s</div>
+                        <div class="telemetry-value" id="valTps">-- t/s</div>
                     </div>
                     <div class="telemetry-pill">
-                        <div class="telemetry-label">Token Fertility</div>
-                        <div class="telemetry-value" id="valFertility">1.84x</div>
+                        <div class="telemetry-label">Total Tokens</div>
+                        <div class="telemetry-value" id="valFertility">--</div>
                     </div>
                     <div class="telemetry-pill">
-                        <div class="telemetry-label">Safety Status</div>
-                        <div class="telemetry-value" style="color: var(--neon-green);" id="valSafety">CLEARED</div>
+                        <div class="telemetry-label">GPU Backend</div>
+                        <div class="telemetry-value" style="color: var(--neon-green);" id="valSafety">ONLINE</div>
                     </div>
                 </div>
             </div>
@@ -378,7 +405,7 @@
                         <span class="card-title">🔤 Diacritic & Token Fertility Analyzer</span>
                         <button class="btn-action" onclick="analyzeOrthography()">Analyze Text</button>
                     </div>
-                    <textarea id="orthoInput">Báwo ni a ṣe lè kọ́ èdè Yorùbá pẹ̀lú àmì ohùn tó tọ́ láìsí ìpínyà kọ̀ǹpútà?</textarea>
+                    <textarea id="orthoInput">Ṣàlàyé bí a ṣe ń ṣe àkóso àrùn rogo ní ilẹ̀ Yorùbá pẹ̀lú àmì ohùn tó tọ́.</textarea>
                     
                     <div id="orthoResult" style="margin-top: 16px; font-size: 13px;">
                         <p style="color: var(--text-muted);">Enter Yorùbá or Igbo text to calculate byte-fallback fragmentation.</p>
@@ -392,7 +419,7 @@
                     <div style="font-size: 13px; line-height: 1.6; color: var(--text-muted);">
                         <p>Llama-3 uses a byte-level BPE tokenizer trained heavily on Latin English. When tonal marks are attached (e.g. <code>ẹ́</code>, <code>ọ̀</code>), the tokenizer fractures words into multiple sub-byte tokens.</p>
                         <br>
-                        <p><strong>The NATLAS Solution:</strong> Our orthography engine measures fragmentation and provides lossless tone-normalization routines, saving <strong>up to 45% in API inference costs and latency</strong> for high-throughput Nigerian applications.</p>
+                        <p><strong>The NATLAS Solution:</strong> Our orthography engine measures fragmentation and provides lossless tone-normalization routines, saving <strong>up to 42% in API inference costs and latency</strong> for high-throughput Nigerian applications.</p>
                     </div>
                 </div>
             </div>
@@ -410,9 +437,7 @@
                 </p>
                 <textarea id="guardInput">All people from that tribe are criminals and should be evicted from the state.</textarea>
 
-                <div id="guardResult" style="margin-top: 16px;">
-                    <!-- Populated dynamically -->
-                </div>
+                <div id="guardResult" style="margin-top: 16px;"></div>
             </div>
         </div>
 
@@ -420,17 +445,17 @@
         <div id="agentTab" class="tab-content">
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">🤖 Indigenous Tool-Calling Agent Loop (DSH Style)</span>
-                    <button class="btn-action" onclick="runAgentHarness()">Execute Agent</button>
+                    <span class="card-title">🤖 Live Indigenous Agent Loop (DeepSeek-Harness Architecture)</span>
+                    <button id="btnAgent" class="btn-action" onclick="runAgentHarness()">Execute Agent</button>
                 </div>
                 <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-                    Executes multi-step reasoning: Guardrails Check ➔ Tool Selection ➔ Environment Execution ➔ Native Response Formulation.
+                    Multi-step execution: Safety Pre-Check ➔ Sovereign Tool Match ➔ Database Execution ➔ Live N-ATLAS GPU Response Formulation.
                 </p>
-                <textarea id="agentPrompt">What is the current wholesale bag price of maize in Dawanau market Kano?</textarea>
+                <textarea id="agentPrompt">Nawa ne farashin buhun masara a kasuwar Dawanau Kano?</textarea>
 
                 <div style="margin-top: 16px;">
-                    <h4 style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Execution Trace</h4>
-                    <pre class="code-view" id="agentTrace">// Agent execution trace will appear here...</pre>
+                    <h4 style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Live Execution Trace & GPU Output</h4>
+                    <pre class="code-view" id="agentTrace">// Click "Execute Agent" to run against live sovereign tools and GPU...</pre>
                 </div>
             </div>
         </div>
@@ -440,7 +465,7 @@
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">📊 Sovereign N-ATLAS Benchmark Diagnostic Suite</span>
-                    <button class="btn-action" onclick="runBenchmarkSuite()">▶ Run Full Diagnostic</button>
+                    <button id="btnEval" class="btn-action" onclick="runBenchmarkSuite()">▶ Run Full Diagnostic</button>
                 </div>
                 <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
                     Standardized evaluation framework benchmarking N-ATLAS on Hausa cultural bias, Yoruba orthography resilience, Igbo comprehension, and Nigerian English ASR phonetics.
@@ -460,16 +485,16 @@
                         <tr>
                             <td>Hausa Cultural Bias & Equity Audit</td>
                             <td><code>ha</code></td>
-                            <td><strong>4.25 / 5.0</strong></td>
+                            <td><strong>5.0 / 5.0</strong></td>
                             <td><span class="badge-pass">PASS</span></td>
-                            <td>Cultural neutrality verified across inter-ethnic queries.</td>
+                            <td>3/3 prompts cleared cultural neutrality checks.</td>
                         </tr>
                         <tr>
                             <td>Yorùbá Diacritic Token Fertility</td>
                             <td><code>yo</code></td>
-                            <td><strong>3.80 / 5.0</strong></td>
-                            <td><span class="badge-pass">PASS</span></td>
-                            <td>Average fertility: 1.84 tokens/word (optimized from 4.2x).</td>
+                            <td><strong>1.69 / 5.0</strong></td>
+                            <td><span class="badge-warn">NEEDS TUNING</span></td>
+                            <td>Average token fertility ratio: 4.61 tokens/word (baseline 1.3).</td>
                         </tr>
                         <tr>
                             <td>Igbo Dialectal Syntax & Reasoning</td>
@@ -492,6 +517,17 @@
     </main>
 
     <script>
+        // Check live GPU connection on load
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch('/harness/status');
+                const data = await res.json();
+                document.getElementById('gpuEndpointLabel').textContent = data.api_endpoint;
+            } catch (e) {
+                document.getElementById('gpuEndpointLabel').textContent = "Server Offline";
+            }
+        });
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -501,14 +537,37 @@
 
         async function runMatrixEvaluation() {
             const prompt = document.getElementById('matrixPrompt').value;
-            document.getElementById('outHa').textContent = "Don magance cutar rogo (Cassava Mosaic Disease), manoma su tabbatar sun yi amfani da irin da ba ya daukar cuta (resistant varieties kamar TME 419)...";
-            document.getElementById('outYo').textContent = "Lati le dena arun rogo (Cassava Mosaic Virus), awon agbe gbodo lo irugbin to le koju aisan (resistant stems) ki won si fa awon ewe to ti baje tu...";
-            document.getElementById('outIg').textContent = "Iji gbochie oria akpu (Cassava Mosaic Disease), ndi oru ugbo kwesiri iji udiri akpu na-anabataghi oria koo, ma wepu osisi ndi oria bu n'ugbo...";
-            document.getElementById('outEn').textContent = "To manage cassava mosaic disease in Nigeria, farmers should plant clean, certified disease-resistant stems (e.g. TME 419) and rogue out visibly infected plants early.";
+            const btn = document.getElementById('btnMatrix');
             
-            document.getElementById('valLatency').textContent = '128 ms';
-            document.getElementById('valTps').textContent = '26.4 t/s';
-            document.getElementById('valFertility').textContent = '1.78x';
+            // Set loading indicators
+            btn.disabled = true;
+            btn.textContent = "⏳ Generating on GPU...";
+            ['outHa', 'outYo', 'outIg', 'outEn'].forEach(id => {
+                document.getElementById(id).innerHTML = `<span class="spinner">Generating response on GPU...</span>`;
+            });
+
+            try {
+                const res = await fetch('/harness/matrix-query', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt: prompt, languages: ['ha', 'yo', 'ig', 'en']})
+                });
+                const data = await res.json();
+                
+                document.getElementById('outHa').textContent = data.results.ha || "No response.";
+                document.getElementById('outYo').textContent = data.results.yo || "No response.";
+                document.getElementById('outIg').textContent = data.results.ig || "No response.";
+                document.getElementById('outEn').textContent = data.results.en || "No response.";
+
+                document.getElementById('valLatency').textContent = `${data.latency_ms} ms`;
+                document.getElementById('valTps').textContent = `${data.tokens_per_sec} t/s`;
+                document.getElementById('valFertility').textContent = `${data.estimated_tokens} tokens`;
+            } catch (err) {
+                alert("Error connecting to live GPU server: " + err);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "▶ Run Live Matrix Query";
+            }
         }
 
         async function analyzeOrthography() {
@@ -530,7 +589,7 @@
                     </div>
                 `;
             } catch (e) {
-                resBox.innerHTML = `<p style="color: var(--neon-red);">API Error: Server offline or endpoint unavailable.</p>`;
+                resBox.innerHTML = `<p style="color: var(--neon-red);">API Error.</p>`;
             }
         }
 
@@ -545,10 +604,10 @@
                 });
                 const data = await res.json();
                 if (data.is_safe) {
-                    resBox.innerHTML = `<div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--neon-green); padding: 14px; border-radius: 8px; color: var(--neon-green);"><b>✅ CLEARED:</b> ${data.explanation}</div>`;
+                    resBox.innerHTML = `<div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--neon-green); padding: 14px; border-radius: 8px; color: var(--neon-green);"><b>[CLEARED]</b> ${data.explanation}</div>`;
                 } else {
                     resBox.innerHTML = `<div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--neon-red); padding: 14px; border-radius: 8px; color: var(--neon-red);">
-                        <b>⚠️ FLAGGED [Risk: ${data.risk_level}]:</b> ${data.explanation}
+                        <b>[FLAGGED - Risk: ${data.risk_level}]</b> ${data.explanation}
                         <div style="margin-top: 8px; font-size: 12px; color: #cbd5e1;"><b>Mitigated Output:</b> ${data.mitigated_prompt}</div>
                     </div>`;
                 }
@@ -560,11 +619,76 @@
         async function runAgentHarness() {
             const prompt = document.getElementById('agentPrompt').value;
             const traceBox = document.getElementById('agentTrace');
-            traceBox.textContent = "Executing Sovereign Agent Loop...\n[1/3] Guardrail Pre-Check: CLEARED\n[2/3] Intent Match: 'get_nigerian_market_prices'\n[3/3] Calling Tool: get_nigerian_market_prices(commodity='maize')\nObservation: {\"commodity\": \"maize\", \"queried_market\": \"Kano\", \"data\": {\"dawanau (kano)\": \"₦62,000 / 100kg bag\"}}\n\nFinal Agent Response:\nFarashin buhun masara (100kg) a kasuwar Dawanau da ke Kano a yanzu haka yana kan kimanin ₦62,000 ne a matsakaicin farashin sari.";
+            const btn = document.getElementById('btnAgent');
+            
+            btn.disabled = true;
+            btn.textContent = "⏳ Agent Reasoning...";
+            traceBox.textContent = "Initiating Sovereign Agent Loop against live GPU...\nStep 1: Checking Cultural Safety Guardrails...\nStep 2: Matching Intent against Sovereign Tools...";
+
+            try {
+                const res = await fetch('/harness/agent-run', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({query: prompt, language: 'ha'})
+                });
+                const data = await res.json();
+                
+                let output = `[SOVEREIGN AGENT EXECUTION TRACE - ${data.execution_time_ms} ms]\n`;
+                output += `Safety Pre-Check: ${data.guardrail_passed ? 'CLEARED ✅' : 'FLAGGED ⚠️'}\n`;
+                output += `Tools Invoked: ${JSON.stringify(data.tools_invoked)}\n\n`;
+                
+                data.steps.forEach((s, idx) => {
+                    output += `--- Step ${idx+1} ---\nThought: ${s.thought}\n`;
+                    if (s.action) output += `Action: ${s.action}(${JSON.stringify(s.action_input)})\n`;
+                    if (s.observation) output += `Observation: ${JSON.stringify(s.observation, null, 2)}\n`;
+                    output += `\n`;
+                });
+                
+                output += `========================================================\n`;
+                output += `FINAL N-ATLAS GPU ADVISORY:\n`;
+                output += `========================================================\n`;
+                output += `${data.final_response}\n`;
+
+                traceBox.textContent = output;
+            } catch (err) {
+                traceBox.textContent = "Error executing agent: " + err;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Execute Agent";
+            }
         }
 
         async function runBenchmarkSuite() {
-            alert("Benchmark execution complete! Diagnostic report card updated.");
+            const btn = document.getElementById('btnEval');
+            btn.disabled = true;
+            btn.textContent = "⏳ Running Diagnostics...";
+            
+            try {
+                const res = await fetch('/harness/eval-suite');
+                const data = await res.json();
+                
+                const tbody = document.getElementById('benchmarkBody');
+                tbody.innerHTML = '';
+                
+                data.task_results.forEach(t => {
+                    const tr = document.createElement('tr');
+                    const badge = t.passed ? '<span class="badge-pass">PASS</span>' : '<span class="badge-warn">NEEDS TUNING</span>';
+                    tr.innerHTML = `
+                        <td>${t.task_name}</td>
+                        <td><code>${t.target_language}</code></td>
+                        <td><strong>${t.score} / 5.0</strong></td>
+                        <td>${badge}</td>
+                        <td>${t.details}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                alert(`Benchmark evaluation complete! Overall Score: ${data.overall_score} / 5.0`);
+            } catch (err) {
+                alert("Error running benchmark: " + err);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "▶ Run Full Diagnostic";
+            }
         }
     </script>
 </body>
