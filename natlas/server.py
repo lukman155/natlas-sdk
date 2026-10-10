@@ -241,8 +241,9 @@ async def agent_run(req: AgentRequest):
     }
 
 @app.get("/harness/eval-suite")
-async def run_eval_suite():
-    report = benchmark_harness.run_suite()
+async def run_eval_suite(live: Optional[bool] = False):
+    import asyncio
+    report = await asyncio.to_thread(benchmark_harness.run_suite, live=live)
     return report
 
 @app.get("/v1/models")
