@@ -12,18 +12,29 @@ class NAtlasClient:
     def __init__(
         self,
         hf_token: Optional[str] = None,
-        backend: str = "ollama",
+        backend: Optional[str] = None,
+        api_url: Optional[str] = None,
         ollama_base_url: str = "http://localhost:11434",
         ollama_model: str = "natlas",
         device: str = "cpu"
     ):
         self.hf_token = hf_token or os.environ.get("HF_TOKEN")
-        self.backend_type = backend
+        remote_url = api_url or os.environ.get("NATLAS_API_URL")
         
+        if remote_url and not backend:
+            self.backend_type = "api"
+            base_url = remote_url
+        elif backend in ["api", "openai", "openai_compat"]:
+            self.backend_type = backend
+            base_url = api_url or os.environ.get("NATLAS_API_URL") or "http://localhost:8000/v1"
+        else:
+            self.backend_type = backend or "ollama"
+            base_url = ollama_base_url
+
         self.chat_pipeline = ChatPipeline(
-            backend=backend,
+            backend=self.backend_type,
             hf_token=self.hf_token,
-            ollama_base_url=ollama_base_url,
+            ollama_base_url=base_url,
             ollama_model=ollama_model,
             device=device
         )

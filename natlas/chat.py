@@ -27,6 +27,9 @@ class ChatPipeline:
         elif self.backend_type == "ollama":
             from .backends.ollama import OllamaBackend
             self.backend = OllamaBackend(base_url=ollama_base_url, model_name=ollama_model)
+        elif self.backend_type in ["openai", "openai_compat", "api"]:
+            from .backends.openai_compat import OpenAICompatBackend
+            self.backend = OpenAICompatBackend(base_url=ollama_base_url)
         else:
             raise ValueError(f"Unknown backend: {backend}")
 
