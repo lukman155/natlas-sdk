@@ -1,12 +1,14 @@
 from typing import Optional, List, Dict
-from pydantic import BaseModel
+from dataclasses import dataclass
 import os
 
-class ChatMessage(BaseModel):
+@dataclass
+class ChatMessage:
     role: str
     content: str
     
-class ChatResponse(BaseModel):
+@dataclass
+class ChatResponse:
     text: str
     language: str
 

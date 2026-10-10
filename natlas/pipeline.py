@@ -1,7 +1,8 @@
 from typing import Union, BinaryIO
-from pydantic import BaseModel
+from dataclasses import dataclass
 
-class VoicePipelineResult(BaseModel):
+@dataclass
+class VoicePipelineResult:
     transcript: str
     response: str
     language: str

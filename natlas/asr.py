@@ -1,7 +1,8 @@
 from typing import Optional, Union, BinaryIO, Dict
-from pydantic import BaseModel
+from dataclasses import dataclass
 
-class ASRResult(BaseModel):
+@dataclass
+class ASRResult:
     text: str
     language: str
     confidence: float

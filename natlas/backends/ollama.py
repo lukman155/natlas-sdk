@@ -1,5 +1,6 @@
-import requests
 import json
+import urllib.request
+import urllib.error
 from typing import List, Dict, Any
 
 class OllamaBackend:
@@ -15,13 +16,20 @@ class OllamaBackend:
             "stream": stream
         }
         
-        # We rely on Ollama to handle the specific template if the Modelfile is properly configured
-        # If stream is False, we parse the single response
         if not stream:
-            response = requests.post(url, json=payload)
-            response.raise_for_status()
-            return response.json().get("message", {}).get("content", "")
-            
+            data_bytes = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(
+                url, 
+                data=data_bytes, 
+                headers={"Content-Type": "application/json"}
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=120) as response:
+                    res_json = json.loads(response.read().decode("utf-8"))
+                    return res_json.get("message", {}).get("content", "")
+            except urllib.error.URLError as e:
+                return f"[Ollama Error: Could not connect to {url} - {e.reason}]"
+            except Exception as e:
+                return f"[Ollama Error: {e}]"
         else:
-            # Yielding stream not fully implemented in pipeline yet, but returning text for now
             raise NotImplementedError("Streaming is not fully implemented in OllamaBackend yet.")
