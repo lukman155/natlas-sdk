@@ -33,10 +33,40 @@ class ChatPipeline:
         else:
             raise ValueError(f"Unknown backend: {backend}")
 
-    def generate(self, prompt: str, language: str = "en", stream: bool = False) -> ChatResponse:
-        self.history.append({"role": "user", "content": prompt})
-        
-        response_text = self.backend.generate(self.history, stream=stream)
-        self.history.append({"role": "assistant", "content": response_text})
-        
+    def reset_history(self):
+        """Reset conversational history to initial system prompt."""
+        self.history = [{"role": "system", "content": self.system_prompt}]
+
+    def generate(
+        self,
+        prompt: str,
+        language: str = "en",
+        stream: bool = False,
+        isolate: bool = False,
+        max_tokens: Optional[int] = None,
+        system_prompt: Optional[str] = None
+    ) -> ChatResponse:
+        sys_msg = system_prompt or self.system_prompt
+        if isolate:
+            messages = [
+                {"role": "system", "content": sys_msg},
+                {"role": "user", "content": prompt}
+            ]
+        else:
+            self.history.append({"role": "user", "content": prompt})
+            messages = self.history
+
+        # Call backend with max_tokens if supported
+        kwargs = {"stream": stream}
+        if max_tokens is not None and hasattr(self.backend, "generate"):
+            try:
+                response_text = self.backend.generate(messages, stream=stream, max_tokens=max_tokens)
+            except TypeError:
+                response_text = self.backend.generate(messages, stream=stream)
+        else:
+            response_text = self.backend.generate(messages, stream=stream)
+
+        if not isolate:
+            self.history.append({"role": "assistant", "content": response_text})
+
         return ChatResponse(text=response_text, language=language)

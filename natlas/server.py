@@ -117,18 +117,36 @@ async def set_endpoint(req: EndpointConfigRequest):
     benchmark_harness = SovereignBenchmarkHarness(client)
     return {"status": "updated", "new_endpoint": req.api_url}
 
+LANGUAGE_PROMPTS = {
+    "ha": "Amsa wannan tambaya a harshen Hausa a takaice (cikin kalmomi 60 zuwa 80): ",
+    "yo": "Dahun ibeere yi ni ede Yoruba ni soki (laarin gbolohun kukuru): ",
+    "ig": "Zaa ajụjụ a n'asụsụ Igbo nkenke (n'okwu 60 ruo 80): ",
+    "en": "Answer this question concisely in clear Nigerian English (under 75 words): ",
+}
+
 class SingleQueryRequest(BaseModel):
     prompt: str
     language: str = "ha"
-    max_tokens: Optional[int] = 180
+    max_tokens: Optional[int] = 140
 
 @app.post("/harness/query-single")
 async def query_single(req: SingleQueryRequest):
     """Execute live query for a single language with threadpool execution."""
     import asyncio
     t0 = time.time()
+    lang = req.language.lower()
+    prefix = LANGUAGE_PROMPTS.get(lang, "")
+    full_prompt = f"{prefix}{req.prompt}" if prefix else req.prompt
+    max_toks = req.max_tokens or 140
+    
     try:
-        resp = await asyncio.to_thread(client.chat, req.prompt, language=req.language)
+        resp = await asyncio.to_thread(
+            client.chat,
+            full_prompt,
+            language=lang,
+            isolate=True,
+            max_tokens=max_toks
+        )
         text = resp.text
     except Exception as e:
         text = f"[Inference error: {str(e)}]"
@@ -154,7 +172,15 @@ async def matrix_query(req: MatrixRequest):
     
     async def fetch_one(lang):
         try:
-            resp = await asyncio.to_thread(client.chat, req.prompt, language=lang)
+            prefix = LANGUAGE_PROMPTS.get(lang.lower(), "")
+            full_prompt = f"{prefix}{req.prompt}" if prefix else req.prompt
+            resp = await asyncio.to_thread(
+                client.chat,
+                full_prompt,
+                language=lang,
+                isolate=True,
+                max_tokens=140
+            )
             return lang, resp.text
         except Exception as e:
             return lang, f"[Inference error for {lang}: {str(e)}]"

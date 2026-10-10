@@ -562,7 +562,7 @@
                     const res = await fetch('/harness/query-single', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({prompt: prompt, language: l.code, max_tokens: 160})
+                        body: JSON.stringify({prompt: prompt, language: l.code, max_tokens: 130})
                     });
                     const data = await res.json();
                     document.getElementById(l.id).textContent = data.text;

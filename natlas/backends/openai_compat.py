@@ -15,14 +15,14 @@ class OpenAICompatBackend:
         self.model = model
         self.ssl_ctx = ssl._create_unverified_context()
 
-    def generate(self, messages: List[Dict[str, str]], stream: bool = False) -> str:
+    def generate(self, messages: List[Dict[str, str]], stream: bool = False, max_tokens: int = 512, temperature: float = 0.1) -> str:
         url = f"{self.base_url}/chat/completions"
         payload = {
             "model": self.model,
             "messages": messages,
             "stream": stream,
-            "temperature": 0.1,
-            "max_tokens": 512
+            "temperature": temperature,
+            "max_tokens": max_tokens
         }
         data_bytes = json.dumps(payload).encode("utf-8")
         headers = {

@@ -46,8 +46,21 @@ class NAtlasClient:
         if self.asr_pipeline is None:
             self.asr_pipeline = ASRPipeline(hf_token=self.hf_token, device=self.device)
 
-    def chat(self, prompt: str, language: str = "en") -> ChatMessage:
-        return self.chat_pipeline.generate(prompt, language=language)
+    def chat(
+        self,
+        prompt: str,
+        language: str = "en",
+        isolate: bool = False,
+        max_tokens: Optional[int] = None,
+        system_prompt: Optional[str] = None
+    ) -> ChatMessage:
+        return self.chat_pipeline.generate(
+            prompt,
+            language=language,
+            isolate=isolate,
+            max_tokens=max_tokens,
+            system_prompt=system_prompt
+        )
         
     def transcribe(self, audio: Union[str, bytes, BinaryIO], language: Optional[str] = None):
         self._init_asr()
