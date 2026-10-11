@@ -16,7 +16,7 @@ from natlas.harness.eval import SovereignBenchmarkHarness
 app = FastAPI(title="N-ATLAS Sovereign API & Developer Harness", version="0.2.0")
 
 # Default to the live Kaggle GPU server, or env variable if set
-DEFAULT_GPU_URL = os.environ.get("NATLAS_API_URL", "https://d9fd-34-186-47-214.ngrok-free.app")
+DEFAULT_GPU_URL = os.environ.get("NATLAS_API_URL", "https://86aa-34-170-208-126.ngrok-free.app")
 client = NAtlasClient(api_url=DEFAULT_GPU_URL)
 agent_harness = SovereignAgentHarness(client)
 benchmark_harness = SovereignBenchmarkHarness(client)
