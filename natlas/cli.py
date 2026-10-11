@@ -121,6 +121,36 @@ def fertility(text, language):
     console.print(f"[bold yellow]Recommendation:[/bold yellow] {report.recommendation}")
 
 @app.command()
+@click.argument('query')
+@click.option('--language', '-l', default='ha', help='Target language (ha, yo, ig, en)')
+def agent(query, language):
+    """Run autonomous sovereign agent reasoning against Nigerian tools."""
+    from natlas.harness.agent import SovereignAgentHarness
+    client = NAtlasClient()
+    harness = SovereignAgentHarness(client)
+    console.print(f"[bold cyan]🤖 Initiating Sovereign Agent Harness ({language})...[/bold cyan]")
+    result = harness.run(query, language=language)
+    
+    if not result.guardrail_passed:
+        console.print(f"[bold red]Safety Check:[/bold red] Flagged by sovereign cultural guardrail.")
+        console.print(f"[yellow]{result.final_response}[/yellow]")
+        return
+        
+    console.print(f"[bold green]Safety Check:[/bold green] Cleared ✅")
+    console.print(f"[bold]Tools Invoked:[/bold] {result.tools_invoked or 'None (Direct Reasoning)'}")
+    
+    for idx, s in enumerate(result.steps):
+        console.print(f"\n[bold blue]--- Step {idx+1} ---[/bold blue]")
+        console.print(f"[italic]Thought:[/italic] {s.thought}")
+        if s.action:
+            console.print(f"[cyan]Action:[/cyan] {s.action}({s.action_input})")
+        if s.observation:
+            console.print(f"[magenta]Observation:[/magenta] {s.observation}")
+            
+    console.print(f"\n[bold green]Final Advisory Output ({language}):[/bold green]")
+    console.print(Markdown(result.final_response))
+
+@app.command()
 def models():
     """List available models."""
     console.print("[bold]Available Sovereign Models:[/bold]")

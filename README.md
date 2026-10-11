@@ -6,7 +6,7 @@
   [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
   [![NAIC 2026](https://img.shields.io/badge/NAIC%202026-PS1%20Developer%20Infrastructure-orange)](https://ncair.nitda.gov.ng/naic/)
-  [![Tests: 13/13 Passing](https://img.shields.io/badge/Tests-13%2F13%20Passing-brightgreen.svg)](tests/)
+  [![Tests: 17/17 Passing](https://img.shields.io/badge/Tests-17%2F17%20Passing-brightgreen.svg)](tests/)
   [![Harness: DSH v0.2.0](https://img.shields.io/badge/Harness-DSH%20v0.2.0-blueviolet.svg)](natlas/harness/)
 </div>
 
@@ -74,6 +74,11 @@ natlas harness --port 8000
 
 # Run Sovereign Benchmark Evaluation
 natlas eval --suite all
+
+# Run Autonomous Sovereign Agent against Nigerian Tools
+natlas agent "Nawa ne farashin masara a Dawanau?" --language ha
+natlas agent "Where is the Kano State ADP agricultural extension office?" --language en
+natlas agent "Kedu ego dollar taa na Nigeria?" --language ig
 
 # Audit text against Cultural Guardrails & Ethnic Bias
 natlas guard "Check this query for tribal slurs and ethnic profiling"

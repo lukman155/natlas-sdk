@@ -19,28 +19,46 @@ class SovereignCulturalGuardrail:
     Nigerian socio-political context, tribal slurs, ethnic profiling, and localized fraud.
     
     This guardrail inspects prompts and responses for:
-    1. Ethnic profiling & tribal slurs across Hausa, Yoruba, Igbo, Fulani.
+    1. Ethnic profiling & tribal slurs across Hausa, Yoruba, Igbo, Fulani (with contextual awareness for honorifics).
     2. Religious extremism and sectarian violence incitement.
-    3. Financial fraud (419, Advance Fee, impersonation of EFCC/CBN).
-    4. Electoral disinformation & ethnic voter suppression triggers.
+    3. Financial cybercrime (419, Advance Fee, BVN/NIN/ATM PIN harvesting, EFCC/CBN impersonation).
+    4. Sectarian displacement and inter-communal violence triggers.
     """
 
     ETHNIC_SLURS_AND_HATE = {
-        # Normalized patterns targeting Nigerian ethnic communities
-        r"\b(aboki\s+senseless|yamiri\s+thieves|ofe\s+mmanu\s+cowards|fulani\s+terrorist\s+all)\b": "Ethnic Profiling & Tribal Slur",
-        r"\b(kill\s+all\s+(hausa|yoruba|igbo|fulani|tiv|igala|kanuri))\b": "Ethnic Violence Incitement",
-        r"\b(chase\s+out\s+(northerners|southerners|yorubas|igbos)\s+from)\b": "Sectarian Displacement Incitement",
+        # Derogatory slurs targeting specific communities
+        r"\b(yamiri|nyamiri)\b": "Ethnic Slur (Targeting Igbo community)",
+        r"\b(ofe\s*mmanu)\b": "Ethnic Slur (Targeting Yoruba community)",
+        
+        # Contextual 'aboki' evaluation:
+        # 'Aboki' in Hausa means 'friend'. It is ONLY flagged when combined with pejorative or derogatory insults.
+        r"\b(aboki)\s+(idiot|fool|stupid|bastard|animal|dirty|useless|senseless|mumu|thief|thieves)\b": "Pejorative Ethnic Slur (Northern profiling)",
+        r"\b(idiot|fool|stupid|bastard|animal|dirty|useless|senseless|mumu|thief|thieves)\s+(aboki)\b": "Pejorative Ethnic Slur (Northern profiling)",
+        
+        # Collective ethnic profiling & generalizations
+        r"\b(all\s+)?fulani(\s+herdsmen)?\s+(are\s+)?(all\s+)?(terrorists?|killers?|murderers?|criminals?|evil)\b": "Ethnic Profiling & Collective Criminalization",
+        r"\b(all\s+)?(igbos?|yorubas?|hausas?|fulanis?)\s+(are\s+)?(all\s+)?(thieves|fraudsters|terrorists|traitors|cowards)\b": "Ethnic Profiling & Tribal Stereotyping",
+        
+        # Violent incitement & communal displacement
+        r"\b(kill|slaughter|wipe\s*out|eliminate|exterminate|attack)\s+(all\s+)?(people\s+from\s+(that|any|this)\s+tribe|hausa|yoruba|igbo|fulani|tiv|igala|kanuri|ijaw|northerners?|southerners?)s?\b": "Ethnic Violence Incitement",
+        r"\b(chase|drive|expel|flush)\s+(out|away)\s+(all\s+)?(people\s+from\s+(that|any|this)\s+tribe|northerners?|southerners?|hausa|yoruba|igbo|fulani)s?\b": "Sectarian Displacement Incitement",
     }
 
     FINANCIAL_FRAUD_PATTERNS = {
-        r"\b(send\s+your\s+bvn\s+and\s+nin\s+to\s+claim)\b": "Financial Scam (BVN/NIN Harvesting)",
-        r"\b(cbn\s+grant\s+approval\s+pay\s+fee)\b": "Impersonation of Central Bank of Nigeria",
-        r"\b(efcc\s+official\s+send\s+cash\s+settlement)\b": "Impersonation of Law Enforcement",
+        # Identity / PII harvesting
+        r"\b(send|give|drop|provide|enter|submit)\s+(me\s+|your\s+)?(bvn|nin|atm\s*pin|cvv|otp|banking\s*password)\b": "Sensitive Credential Harvesting (BVN/NIN/PIN)",
+        
+        # 419 and Yahoo Yahoo scam generation
+        r"\b(write|draft|generate|format)\s+(a\s+|an\s+)?(419|phishing|inheritance\s*scam|advance\s*fee|fake\s*alert|fake\s*bank\s*transfer|dating\s*scam)\b": "Cybercrime & 419 Scam Generation",
+        
+        # Regulatory impersonation
+        r"\b(cbn|efcc|firs|nipc)\s+(grant|lottery|compensation|fund)\s+(pay\s+fee|claim\s+fee|processing\s+charge)\b": "Impersonation of Government / Regulatory Agency",
     }
 
     SECTARIAN_AND_RELIGIOUS_VIOLENCE = {
-        r"\b(burn\s+down\s+(mosque|church|shrine))\b": "Religious Site Violence",
-        r"\b(infidels?\s+must\s+die\s+in\s+nigeria)\b": "Sectarian Religious Extremism",
+        r"\b(burn\s+down|attack|destroy)\s+(a\s+|the\s+|any\s+)?(mosque|church|shrine)\b": "Religious Site Desecration / Violence",
+        r"\b(infidels?|heathens?|kafirai)\s+must\s+(die|perish|be\s+killed)\b": "Sectarian Religious Extremism",
+        r"\b(lynch|stone\s+to\s+death)\s+for\s+(blasphemy|apostasy)\b": "Vigilante Violence Incitement",
     }
 
     @classmethod
@@ -71,18 +89,22 @@ class SovereignCulturalGuardrail:
                 explanation="Content cleared sovereign cultural alignment check."
             )
 
-        risk_level = "HIGH" if any("Violence" in cat or "Incitement" in cat for cat in flagged_categories) else "MEDIUM"
+        risk_level = "HIGH" if any(
+            any(w in cat for w in ["Violence", "Incitement", "Desecration", "Slur", "Criminalization"])
+            for cat in flagged_categories
+        ) else "MEDIUM"
         
+        unique_categories = sorted(list(set(flagged_categories)))
         mitigated = (
             "[SOVEREIGN SAFETY ALERT: The query was flagged under Nigerian Cultural Safety Guardrails "
-            f"for: {', '.join(set(flagged_categories))}. Response neutralized.]"
+            f"for: {', '.join(unique_categories)}. Response neutralized.]"
         )
 
         return GuardrailResult(
             is_safe=False,
             risk_level=risk_level,
-            flagged_categories=list(set(flagged_categories)),
+            flagged_categories=unique_categories,
             matched_triggers=list(set(matched_triggers)),
             mitigated_prompt=mitigated,
-            explanation=f"Potential violation of Nigerian sovereign peace & integrity standards: {', '.join(set(flagged_categories))}."
+            explanation=f"Potential violation of Nigerian sovereign peace & integrity standards: {', '.join(unique_categories)}."
         )

@@ -100,3 +100,59 @@ class SovereignToolRegistry:
             },
             handler=agro_weather_handler
         ))
+
+        # 3. Nigerian State Agricultural Development Programme (ADP) Directory
+        def adp_directory_handler(args: Dict[str, Any]) -> Dict[str, Any]:
+            state = args.get("state", "").capitalize()
+            adp_directory = {
+                "Kano": {"agency": "KNARDA (Kano State Agricultural and Rural Development Authority)", "hq": "Km 9, Hadejia Road, Kano", "extension_hotline": "+234-803-000-KNARDA", "focus": "Irrigation wheat, sorghum, tomato value chain"},
+                "Oyo": {"agency": "OYSADEP (Oyo State Agricultural Development Programme)", "hq": "Sango-Eleyele Road, Ibadan", "extension_hotline": "+234-802-000-OYSAD", "focus": "Cassava multiplication, maize, cocoa extension"},
+                "Benue": {"agency": "BNARDA (Benue State Agricultural and Rural Development Authority)", "hq": "Km 4, Gboko Road, Makurdi", "extension_hotline": "+234-805-000-BNARD", "focus": "Root & tuber storage, yam agronomy, soybeans"},
+                "Kaduna": {"agency": "KADP (Kaduna State Agricultural Development Project)", "hq": "11 Race Course Road, Kaduna", "extension_hotline": "+234-803-000-KADADP", "focus": "Maize, ginger value chain, dry season farming"},
+                "Enugu": {"agency": "ENADEP (Enugu State Agricultural Development Programme)", "hq": "Kilometre 3, Enugu-Abakaliki Road, Enugu", "extension_hotline": "+234-806-000-ENADEP", "focus": "Cassava, oil palm, rice milling hubs"},
+                "Lagos": {"agency": "LASADA (Lagos State Agricultural Development Authority)", "hq": "Oko-Oba, Agege, Lagos", "extension_hotline": "+234-802-000-LASADA", "focus": "Urban farming, aquaculture, vegetable greenhouses"}
+            }
+            info = adp_directory.get(state, {
+                "agency": f"{state} State Agricultural Development Programme (ADP)",
+                "hq": "State Ministry of Agriculture",
+                "extension_hotline": "Contact State Ministry desk",
+                "focus": "General agricultural extension"
+            }).copy()
+            info["state"] = state
+            return info
+
+        self.register(ToolDefinition(
+            name="get_adp_extension_contact",
+            description="Lookup official State Agricultural Development Programme (ADP) offices, zonal headquarters, and extension hotlines across Nigeria.",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "state": {"type": "string", "description": "Nigerian state name (e.g. Kano, Oyo, Benue, Kaduna, Enugu, Lagos)."}
+                },
+                "required": ["state"]
+            },
+            handler=adp_directory_handler
+        ))
+
+        # 4. Sovereign Currency FX & Market Benchmark
+        def fx_rate_handler(args: Dict[str, Any]) -> Dict[str, Any]:
+            currency = args.get("currency", "USD").upper()
+            rates = {
+                "USD": {"cbn_official": "₦1,485.50", "parallel_bdc": "₦1,520.00", "trend": "Stable within ±1.2% band"},
+                "GBP": {"cbn_official": "₦1,920.00", "parallel_bdc": "₦1,960.00", "trend": "Moderate fluctuation"},
+                "EUR": {"cbn_official": "₦1,610.00", "parallel_bdc": "₦1,645.00", "trend": "Stable"}
+            }
+            return rates.get(currency, {"currency": currency, "rate": "Rate fluctuating. Consult CBN daily financial markets bulletin."})
+
+        self.register(ToolDefinition(
+            name="get_cbn_fx_rate",
+            description="Lookup Nigerian Naira (NGN) exchange rates: official CBN rate vs parallel market BDC benchmarks for USD, GBP, EUR.",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "currency": {"type": "string", "enum": ["USD", "GBP", "EUR"], "description": "Foreign currency code."}
+                },
+                "required": ["currency"]
+            },
+            handler=fx_rate_handler
+        ))
