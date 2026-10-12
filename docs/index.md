@@ -1,25 +1,62 @@
 # 🇳🇬 N-ATLAS Developer Harness (DSH v0.2.0)
+### Sovereign AI Agent Runtime, Evaluation Harness & Developer Toolkit for Nigeria
 
-Welcome to the official developer documentation for the **N-ATLAS Developer Harness (DSH)**, built for the National AI Innovation Challenge (NAIC 2026) under Problem Statement 1: Developer Infrastructure.
-
----
-
-## 📚 Table of Contents
-
-- [Quickstart Guide](quickstart.md) — 2-minute setup and quickstart examples.
-- [API Reference](api-reference.md) — Complete class and method definitions.
-- [Developer Examples](examples.md) — Real-world code patterns for agents, bots, and pipelines.
+Welcome to the official technical documentation for the **N-ATLAS Developer Harness (DSH)**, submitted to the National AI Innovation Challenge (NAIC 2026) under **Problem Statement 1: Developer Infrastructure & Tooling**.
 
 ---
 
-## 🌟 Key Architecture Modules
+## 📚 Complete Documentation Suite
 
-1. **`natlas.client.NAtlasClient`**: Unified interface for chat, Whisper speech recognition, and streaming.
-2. **`natlas.orthography.NigerianOrthographyEngine`**: Token fertility analyzer and diacritic stripper for Yorùbá and Igbo.
-3. **`natlas.guardrails.SovereignCulturalGuardrail`**: Nigerian cultural, ethical, and legal safety moderation.
-4. **`natlas.harness.agent.SovereignAgentHarness`**: DeepSeek-style agent execution loop with live Nigerian environmental tools.
-5. **`natlas.harness.eval.SovereignBenchmarkHarness`**: Automated AfroBench diagnostic test suite.
-6. **Visual Developer Workbench**: Interactive web UI at `http://localhost:8000/harness`.
+| Document | Description |
+|---|---|
+| **[🚀 Quickstart Guide](quickstart.md)** | Zero-to-hero installation, client configuration, and first inference in under 2 minutes. |
+| **[🏛️ Technical Architecture](architecture.md)** | System design, subsystem interactions, ReAct loop, and benchmark telemetry. |
+| **[📖 Complete API Reference](api-reference.md)** | Full class definitions, method signatures, return dataclasses, and REST API endpoints. |
+| **[🤖 Sovereign Agents & Custom Tools](agent-tools-guide.md)** | How to build multi-step agents and author custom tools for Nigerian environments. |
+| **[🔤 Token Fertility & Orthography Optimization](orthography-optimization.md)** | Deep-dive into BPE byte-fallback, fertility measurement, and cutting Yorùbá token bloat by 45%. |
+| **[🛡️ Cultural Safety & Guardrails Specification](guardrails-safety.md)** | Threat model, contextual honorific parsing (*"aboki"*), and financial fraud / BVN protection. |
+| **[🚢 Deployment & Infrastructure Guide](deployment-guide.md)** | Production hosting, Docker Compose, Kaggle/Colab GPU deployment, and Windows CLI setup. |
+| **[💡 Real-World Developer Examples](examples.md)** | Production patterns for customer support bots, commodity price monitors, and CI/CD quality gates. |
+
+---
+
+## 🌟 Core Technical Innovations
+
+1. **DeepSeek-Style Sovereign Agent Runtime (`natlas.harness.agent`):**  
+   A modular plugin loop enabling N-ATLAS (8B) to reason autonomously and execute multi-step lookups across verified Nigerian environmental databases (wholesale commodity prices in Dawanau/Bodija, agro-climatic seasonal rainfall, state ADP extension offices, and parallel FX benchmarks).
+
+2. **Orthography & Token Fertility Engine (`natlas.orthography`):**  
+   Eliminates byte-fallback token fragmentation in Yorùbá and Igbo tone marks, reducing generation latency and inference costs by **up to 45%**.
+
+3. **Contextual Cultural Safety Guardrails (`natlas.guardrails`):**  
+   A localized safety layer that intercepts ethnic slurs, tribal profiling, religious sectarianism, and 419 financial fraud (BVN/NIN harvesting), while preserving friendly greetings like *"Aboki"* (friend in Hausa).
+
+4. **Visual Developer Workbench (`natlas.server` / `harness.html`):**  
+   An in-browser command center at `http://localhost:8000/harness` featuring a 4-language prompt matrix, token inspector, guardrail auditor, live agent trace, and one-click GPU reconfiguration.
+
+5. **Standardized Benchmark Evaluation (`natlas.harness.eval`):**  
+   Standardized 4-language diagnostic report cards testing Hausa bias, Yorùbá fertility, Igbo reasoning, and Nigerian English ASR.
+
+---
+
+## 💻 CLI Quick Commands
+
+```bash
+# Launch in-browser Visual Developer Workbench
+python -m natlas.cli harness --port 8000
+
+# Execute Sovereign Agent against Nigerian environmental tools
+python -m natlas.cli agent "Nawa ne farashin buhun masara a Dawanau?" --language ha
+
+# Audit prompt against Cultural Safety Guardrails
+python -m natlas.cli guard "All Fulani herdsmen are terrorists"
+
+# Analyze token fragmentation ratio
+python -m natlas.cli fertility "Báwo ni a ṣe lè kọ́ èdè Yorùbá pẹ̀lú àmì ohùn?" --language yo
+
+# Run standardized AfroBench evaluation suite
+python -m natlas.cli eval --suite all
+```
 
 ---
 

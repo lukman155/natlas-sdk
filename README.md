@@ -49,11 +49,32 @@ pip install -e .
 
 ---
 
+## 📚 Technical Documentation Suite
+
+Comprehensive technical specifications and implementation guides are available in [`docs/`](docs/):
+
+| Document | Focus |
+|---|---|
+| **[🚀 Quickstart Guide](docs/quickstart.md)** | 2-minute setup, client initialization, and multilingual inference |
+| **[🏛️ Technical Architecture](docs/architecture.md)** | Subsystem design, ReAct agent loop, and benchmark telemetry |
+| **[📖 Complete API Reference](docs/api-reference.md)** | Full class methods, parameters, dataclasses, and REST API endpoints |
+| **[🤖 Sovereign Agents & Tools](docs/agent-tools-guide.md)** | Authoring custom Nigerian environmental tools & ReAct execution |
+| **[🔤 Orthography Optimization](docs/orthography-optimization.md)** | Eliminating Yorùbá/Igbo BPE byte-fallback and 45% latency reduction |
+| **[🛡️ Cultural Safety Guardrails](docs/guardrails-safety.md)** | Nigerian threat taxonomy, contextual *"aboki"* parsing, and BVN protection |
+| **[🚢 Deployment & Infrastructure](docs/deployment-guide.md)** | Docker Compose, Kaggle/Colab GPU deployment, and Windows CLI setup |
+| **[💡 Real-World Examples](docs/examples.md)** | Production patterns for customer support, market price agents, and CI/CD |
+
+---
+
 ## 🎮 Launch the Visual Developer Workbench
 
 Launch the high-tech browser harness in one command:
 
 ```bash
+# Universal command (works anywhere in Windows/Linux/macOS)
+python -m natlas.cli harness --port 8000
+
+# Or using the direct executable entrypoint (when Scripts is on PATH)
 natlas harness --port 8000
 ```
 
@@ -229,7 +250,7 @@ All unit tests run on standard Python library `unittest` with zero mandatory dep
 
 ```bash
 python -m unittest discover -s tests
-# Ran 13 tests in 0.041s ... OK
+# Ran 17 tests in 4.088s ... OK
 ```
 
 ---
